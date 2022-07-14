@@ -121,12 +121,10 @@ pub struct Dribbling {
     pub angle_to_approach_ball_from_threshold: f32,
     pub in_walk_kicks: InWalkKicks,
     pub use_side_kick_everywhere: bool,
+    pub find_kick_targets: FindKickTargets,
     pub angle_distance_weight: f32,
-    pub max_kick_around_obstacle_angle: f32,
     pub ignore_robot_when_near_ball_radius: f32,
     pub kick_pose_obstacle_radius: f32,
-    pub emergency_kick_target_angles: Vec<f32>,
-    pub ball_radius_for_kick_target_selection: f32,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, SerializeHierarchy)]
@@ -140,6 +138,16 @@ pub struct InWalkKicks {
     pub forward: InWalkKickInfo,
     pub turn: InWalkKickInfo,
     pub side: InWalkKickInfo,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, SerializeHierarchy)]
+pub struct FindKickTargets {
+    pub use_corner_kick_targets: bool,
+    pub distance_from_corner: f32,
+    pub corner_kick_target_distance_to_goal: f32,
+    pub emergency_kick_target_angles: Vec<f32>,
+    pub max_kick_around_obstacle_angle: f32,
+    pub ball_radius_for_kick_target_selection: f32,
 }
 
 impl Index<KickVariant> for InWalkKicks {

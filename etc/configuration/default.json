@@ -922,13 +922,18 @@
           "enabled": true
         }
       },
+      "find_kick_targets": {
+        "use_corner_kick_targets": false,
+        "distance_from_corner": 1.5,
+        "corner_kick_target_distance_to_goal": 0.8,
+        "emergency_kick_target_angles": [-0.52, -0.26, 0.0, 0.26, 0.52],
+        "max_kick_around_obstacle_angle": 1.0,
+        "ball_radius_for_kick_target_selection": 0.15
+      },
       "use_side_kick_everywhere": true,
       "angle_distance_weight": 0.01,
-      "max_kick_around_obstacle_angle": 1.0,
       "ignore_robot_when_near_ball_radius": 0.6,
-      "kick_pose_obstacle_radius": 0.1,
-      "emergency_kick_target_angles": [-0.52, -0.26, 0.0, 0.26, 0.52],
-      "ball_radius_for_kick_target_selection": 0.15
+      "kick_pose_obstacle_radius": 0.1
     },
     "walk_and_stand": {
       "hysteresis": [0.05, 0.05],

@@ -2,10 +2,12 @@ use std::cmp::Ordering;
 
 use framework::AdditionalOutput;
 use itertools::iproduct;
-use nalgebra::{point, vector, Isometry2, Point2, Rotation2, UnitComplex};
+use nalgebra::{distance, point, vector, Isometry2, Point2, Rotation2, UnitComplex};
 use ordered_float::NotNan;
 use types::{
-    configuration::{Dribbling as DribblingConfiguration, InWalkKickInfo, InWalkKicks},
+    configuration::{
+        Dribbling as DribblingConfiguration, FindKickTargets, InWalkKickInfo, InWalkKicks,
+    },
     rotate_towards, Circle, FieldDimensions, HeadMotion, KickDecision, KickVariant, LineSegment,
     MotionCommand, Obstacle,
     OrientationMode::{self, AlignWithPath},
@@ -70,7 +72,7 @@ pub fn execute(
         robot_to_field,
         field_dimensions,
         &world_state.obstacles,
-        parameters,
+        &parameters.find_kick_targets,
     );
     kick_targets_output.fill_if_subscribed(|| targets_to_kick_to.clone());
 
@@ -190,19 +192,60 @@ fn find_targets_to_kick_to(
     robot_to_field: Isometry2<f32>,
     field_dimensions: &FieldDimensions,
     obstacles: &[Obstacle],
-    parameters: &DribblingConfiguration,
+    parameters: &FindKickTargets,
 ) -> Vec<Point2<f32>> {
     let field_to_robot = robot_to_field.inverse();
-    let left_goal_half = field_to_robot
+
+    let mut possible_kick_targets: Vec<Point2<f32>> = vec![];
+
+    // Create from corner targets
+    if is_ball_in_opponents_corners(&ball_position, parameters, field_dimensions, robot_to_field)
+        && parameters.use_corner_kick_targets
+    {
+        let from_corner_kick_target_x =
+            field_dimensions.length / 2.0 - parameters.corner_kick_target_distance_to_goal;
+        possible_kick_targets
+            .push(robot_to_field.inverse() * point![from_corner_kick_target_x, 0.0]);
+    } else {
+        // Generate generic targets
+        let left_goal_half = field_to_robot
+            * point![
+                field_dimensions.length / 2.0,
+                field_dimensions.goal_inner_width / 4.0
+            ];
+        let right_goal_half = field_to_robot
+            * point![
+                field_dimensions.length / 2.0,
+                -field_dimensions.goal_inner_width / 4.0
+            ];
+        possible_kick_targets.extend(vec![left_goal_half, right_goal_half]);
+    }
+
+    // Create emergency targets in own goal area
+    let own_goal_center = field_to_robot
         * point![
-            field_dimensions.length / 2.0,
-            field_dimensions.goal_inner_width / 4.0
+            -field_dimensions.length / 2.0 - field_dimensions.goal_depth / 2.0,
+            0.0
         ];
-    let right_goal_half = field_to_robot
-        * point![
-            field_dimensions.length / 2.0,
-            -field_dimensions.goal_inner_width / 4.0
-        ];
+    if is_ball_close_to_own_goal(&ball_position, own_goal_center, field_dimensions) {
+        let goal_center_to_ball = ball_position - own_goal_center;
+        let target_vector_from_goal = goal_center_to_ball
+            .normalize()
+            .scale(field_dimensions.width / 2.0);
+
+        let emergency_targets = parameters
+            .emergency_kick_target_angles
+            .iter()
+            .map(|angle| {
+                let rotation_matrix = Rotation2::new(*angle);
+                let kick_target_vector_from_goal = rotation_matrix * target_vector_from_goal;
+                own_goal_center + kick_target_vector_from_goal
+            })
+            .filter(|target| (robot_to_field * target).x > -field_dimensions.length / 2.0);
+        possible_kick_targets.extend(emergency_targets);
+    }
+
+    // Create obstacles kick targets to filter with
     let obstacle_circles: Vec<_> = obstacles
         .iter()
         .map(|obstacle| {
@@ -224,31 +267,7 @@ fn find_targets_to_kick_to(
         })
         .collect();
 
-    let mut possible_kick_targets = vec![left_goal_half, right_goal_half];
-
-    let own_goal_center = field_to_robot
-        * point![
-            -field_dimensions.length / 2.0 - field_dimensions.goal_depth / 2.0,
-            0.0
-        ];
-    if ball_is_close_to_own_goal(&ball_position, own_goal_center, field_dimensions) {
-        let goal_center_to_ball = ball_position - own_goal_center;
-        let target_vector_from_goal = goal_center_to_ball
-            .normalize()
-            .scale(field_dimensions.width / 2.0);
-
-        let emergency_targets = parameters
-            .emergency_kick_target_angles
-            .iter()
-            .map(|angle| {
-                let rotation_matrix = Rotation2::new(*angle);
-                let kick_target_vector_from_goal = rotation_matrix * target_vector_from_goal;
-                own_goal_center + kick_target_vector_from_goal
-            })
-            .filter(|target| (robot_to_field * target).x > -field_dimensions.length / 2.0);
-        possible_kick_targets.extend(emergency_targets);
-    }
-
+    // Filter kick targets
     possible_kick_targets
         .into_iter()
         .flat_map(|target| {
@@ -332,7 +351,7 @@ fn distance_to_kick_pose(kick_pose: Isometry2<f32>, angle_distance_weight: f32) 
     kick_pose.translation.vector.norm() + angle_distance_weight * kick_pose.rotation.angle().abs()
 }
 
-fn ball_is_close_to_own_goal(
+fn is_ball_close_to_own_goal(
     ball_position: &Point2<f32>,
     own_goal_center: Point2<f32>,
     field_dimensions: &FieldDimensions,
@@ -344,4 +363,21 @@ fn ball_is_close_to_own_goal(
     .norm();
     let goal_to_ball = ball_position - own_goal_center;
     goal_to_ball.norm() < is_close_threshold
+}
+
+fn is_ball_in_opponents_corners(
+    ball_position: &Point2<f32>,
+    parameters: &FindKickTargets,
+    field_dimensions: &FieldDimensions,
+    robot_to_field: Isometry2<f32>,
+) -> bool {
+    let global_ball = robot_to_field * ball_position;
+    let left_opponent_corner = point![field_dimensions.length / 2.0, field_dimensions.width / 2.0];
+    let right_opponent_corner =
+        point![field_dimensions.length / 2.0, -field_dimensions.width / 2.0];
+    let ball_near_left_opponent_corner = distance(&global_ball, &left_opponent_corner)
+        < parameters.distance_from_corner;
+    let ball_near_right_opponent_corner = distance(&global_ball, &right_opponent_corner)
+        < parameters.distance_from_corner;
+    ball_near_left_opponent_corner || ball_near_right_opponent_corner
 }
