@@ -3329,6 +3329,7 @@ dependencies = [
  "serialize_hierarchy",
  "source_graph",
  "spl_network",
+ "tokio",
 ]
 
 [[package]]
