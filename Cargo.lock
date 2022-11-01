@@ -716,8 +716,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "context_attribute",
+ "filtering",
  "framework",
  "hardware",
+ "nalgebra",
+ "types",
 ]
 
 [[package]]
@@ -1341,6 +1344,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "filtering"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "approx",
+ "nalgebra",
+ "rand",
+ "rand_distr",
+ "serde",
+ "serde_json",
+ "serialize_hierarchy",
+]
+
+[[package]]
 name = "fixedbitset"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1841,7 +1858,7 @@ dependencies = [
  "serde_json",
  "serialize_hierarchy",
  "smallvec",
- "spl_network",
+ "spl_network_messages",
  "structopt",
  "syn",
  "tokio",
@@ -2657,7 +2674,7 @@ dependencies = [
  "regex",
  "repository",
  "source_analyzer",
- "spl_network",
+ "spl_network_messages",
  "tokio",
 ]
 
@@ -2944,7 +2961,7 @@ dependencies = [
  "home",
  "serde",
  "serde_json",
- "spl_network",
+ "spl_network_messages",
  "tempfile",
  "tokio",
 ]
@@ -3283,10 +3300,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "source_analysis"
-version = "0.1.0"
-
-[[package]]
 name = "source_analyzer"
 version = "0.1.0"
 dependencies = [
@@ -3322,7 +3335,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "spl_network"
+name = "spl_network2"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "context_attribute",
+ "framework",
+ "hardware",
+]
+
+[[package]]
+name = "spl_network_messages"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -3331,16 +3354,6 @@ dependencies = [
  "byteorder",
  "nalgebra",
  "serde",
-]
-
-[[package]]
-name = "spl_network2"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "context_attribute",
- "framework",
- "hardware",
 ]
 
 [[package]]
@@ -3735,6 +3748,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "approx",
+ "filtering",
  "image",
  "nalgebra",
  "ordered-float",
@@ -3745,7 +3759,7 @@ dependencies = [
  "serde_json",
  "serialize_hierarchy",
  "source_graph",
- "spl_network",
+ "spl_network_messages",
  "tokio",
 ]
 
@@ -3848,6 +3862,19 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "vision"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "context_attribute",
+ "filtering",
+ "framework",
+ "hardware",
+ "nalgebra",
+ "types",
+]
 
 [[package]]
 name = "walkdir"
