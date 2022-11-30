@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use color_eyre::Result;
 use communication::{Cycler, CyclerOutput};
 use eframe::epaint::{Color32, Stroke};
 use nalgebra::{point, Point2};
@@ -23,7 +24,7 @@ impl Overlay for LineDetection {
         }
     }
 
-    fn paint(&self, painter: &crate::twix_painter::TwixPainter) -> anyhow::Result<()> {
+    fn paint(&self, painter: &crate::twix_painter::TwixPainter) -> Result<()> {
         let lines_in_image: ImageLines = self.lines_in_image.require_latest()?;
         for point in lines_in_image.points {
             painter.circle_stroke(to_444(point), 3.0, Stroke::new(1.0, Color32::RED))

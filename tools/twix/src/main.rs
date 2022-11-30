@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use anyhow::Result;
+use color_eyre::Result;
 
 use completion_edit::CompletionEdit;
 use eframe::{
