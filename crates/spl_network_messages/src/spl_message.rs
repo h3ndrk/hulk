@@ -6,8 +6,8 @@ use std::{
     time::Duration,
 };
 
-use color_eyre::{eyre::bail, Result, Report};
 use byteorder::{ByteOrder, NativeEndian};
+use color_eyre::{eyre::bail, Report, Result};
 use nalgebra::{point, vector, Isometry2};
 use serde::{Deserialize, Serialize};
 
