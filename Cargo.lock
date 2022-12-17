@@ -693,11 +693,20 @@ dependencies = [
 name = "control"
 version = "0.1.0"
 dependencies = [
+ "approx",
  "color-eyre",
  "context_attribute",
  "filtering",
  "framework",
+ "itertools",
+ "kinematics",
+ "log",
  "nalgebra",
+ "ordered-float",
+ "serde",
+ "serde_json",
+ "serialize_hierarchy",
+ "smallvec",
  "spl_network_messages",
  "types",
 ]
@@ -1942,6 +1951,14 @@ name = "khronos_api"
 version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
+
+[[package]]
+name = "kinematics"
+version = "0.1.0"
+dependencies = [
+ "nalgebra",
+ "types",
+]
 
 [[package]]
 name = "lazy_static"
@@ -3257,6 +3274,7 @@ dependencies = [
  "nalgebra",
  "proc-macro2",
  "quote",
+ "serde",
  "source_analyzer",
  "spl_network_messages",
  "types",
