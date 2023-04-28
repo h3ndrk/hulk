@@ -196,16 +196,15 @@ fn find_targets_to_kick_to(
 ) -> Vec<Point2<f32>> {
     let field_to_robot = robot_to_field.inverse();
 
-    let mut possible_kick_targets: Vec<Point2<f32>> = vec![];
+    let mut possible_kick_targets = Vec::new();
 
     // Create from corner targets
-    if is_ball_in_opponents_corners(&ball_position, parameters, field_dimensions, robot_to_field)
-        && parameters.use_corner_kick_targets
-    {
-        let from_corner_kick_target_x =
-            field_dimensions.length / 2.0 - parameters.corner_kick_target_distance_to_goal;
-        possible_kick_targets
-            .push(robot_to_field.inverse() * point![from_corner_kick_target_x, 0.0]);
+    if is_ball_in_opponents_corners(&ball_position, parameters, field_dimensions, robot_to_field) {
+        possible_kick_targets.extend(generate_corner_kick_targets(
+            parameters,
+            field_dimensions,
+            robot_to_field,
+        ));
     } else {
         // Generate generic targets
         let left_goal_half = field_to_robot
@@ -218,7 +217,7 @@ fn find_targets_to_kick_to(
                 field_dimensions.length / 2.0,
                 -field_dimensions.goal_inner_width / 4.0
             ];
-        possible_kick_targets.extend(vec![left_goal_half, right_goal_half]);
+        possible_kick_targets.extend([left_goal_half, right_goal_half]);
     }
 
     // Create emergency targets in own goal area
@@ -289,6 +288,16 @@ fn find_targets_to_kick_to(
             }
         })
         .collect()
+}
+
+fn generate_corner_kick_targets(
+    parameters: &FindKickTargets,
+    field_dimensions: &FieldDimensions,
+    robot_to_field: Isometry2<f32>,
+) -> Vec<Point2<f32>> {
+    let from_corner_kick_target_x =
+        field_dimensions.length / 2.0 - parameters.corner_kick_target_distance_to_goal;
+    vec![robot_to_field.inverse() * point![from_corner_kick_target_x, 0.0]]
 }
 
 fn is_inside_any_obstacle(
@@ -375,9 +384,9 @@ fn is_ball_in_opponents_corners(
     let left_opponent_corner = point![field_dimensions.length / 2.0, field_dimensions.width / 2.0];
     let right_opponent_corner =
         point![field_dimensions.length / 2.0, -field_dimensions.width / 2.0];
-    let ball_near_left_opponent_corner = distance(&global_ball, &left_opponent_corner)
-        < parameters.distance_from_corner;
-    let ball_near_right_opponent_corner = distance(&global_ball, &right_opponent_corner)
-        < parameters.distance_from_corner;
+    let ball_near_left_opponent_corner =
+        distance(&global_ball, &left_opponent_corner) < parameters.distance_from_corner;
+    let ball_near_right_opponent_corner =
+        distance(&global_ball, &right_opponent_corner) < parameters.distance_from_corner;
     ball_near_left_opponent_corner || ball_near_right_opponent_corner
 }

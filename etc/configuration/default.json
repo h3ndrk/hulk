@@ -923,7 +923,6 @@
         }
       },
       "find_kick_targets": {
-        "use_corner_kick_targets": false,
         "distance_from_corner": 1.5,
         "corner_kick_target_distance_to_goal": 0.8,
         "emergency_kick_target_angles": [-0.52, -0.26, 0.0, 0.26, 0.52],

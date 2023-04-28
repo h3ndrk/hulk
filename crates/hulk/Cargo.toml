@@ -38,5 +38,9 @@ name = "nao"
 required-features = ["nao"]
 
 [[bin]]
+name = "test"
+required-features = ["nao"]
+
+[[bin]]
 name = "webots"
 required-features = ["webots"]

@@ -142,7 +142,6 @@ pub struct InWalkKicks {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, SerializeHierarchy)]
 pub struct FindKickTargets {
-    pub use_corner_kick_targets: bool,
     pub distance_from_corner: f32,
     pub corner_kick_target_distance_to_goal: f32,
     pub emergency_kick_target_angles: Vec<f32>,
