@@ -1,4 +1,5 @@
-use convert_case::{Case, Casing};
+use quote::format_ident;
+use syn::Ident;
 
 use crate::cycler::Cycler;
 
@@ -37,7 +38,7 @@ impl Path {
                     .map(|segment| {
                         if segment.is_variable {
                             PathSegment {
-                                name: instance.name.to_case(Case::Snake),
+                                name: instance.name.clone(),
                                 is_optional: segment.is_optional,
                                 is_variable: false,
                             }
@@ -54,7 +55,7 @@ impl Path {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct PathSegment {
-    pub name: String,
+    pub name: Ident,
     pub is_optional: bool,
     pub is_variable: bool,
 }
@@ -71,7 +72,7 @@ impl From<&str> for PathSegment {
         };
 
         Self {
-            name: segment[start_index..end_index].to_string(),
+            name: format_ident!("{}", segment[start_index..end_index]),
             is_optional,
             is_variable,
         }

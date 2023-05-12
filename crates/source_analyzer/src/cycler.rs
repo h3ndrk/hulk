@@ -3,7 +3,9 @@ use std::{
     path::Path,
 };
 
+use quote::format_ident;
 use serde::Deserialize;
+use syn::Ident;
 use topological_sort::TopologicalSort;
 
 use crate::{
@@ -13,9 +15,8 @@ use crate::{
     node::Node,
 };
 
-pub type CyclerName = String;
-pub type InstanceName = String;
-pub type ModulePath = String;
+pub type CyclerName = Ident;
+pub type InstanceName = Ident;
 
 #[derive(Debug)]
 pub struct Instance {
@@ -46,7 +47,7 @@ impl Cycler {
         let instances = instance_names
             .iter()
             .map(|instance_name| Instance {
-                name: format!("{}{}", cycler_manifest.name, instance_name),
+                name: format_ident!("{}{}", cycler_manifest.name, instance_name),
             })
             .collect();
         let setup_nodes = cycler_manifest
@@ -78,7 +79,7 @@ impl Cycler {
                     .main_outputs
                     .iter()
                     .filter_map(move |field| match field {
-                        Field::MainOutput { name, .. } => Some((name.to_string(), node)),
+                        Field::MainOutput { name, .. } => Some((name.clone(), node)),
                         _ => None,
                     })
             })
@@ -90,7 +91,7 @@ impl Cycler {
         )?;
 
         let setup_outputs = output_name_to_setup_node.keys().cloned().collect();
-        let output_to_node: HashMap<_, _> = self
+        let output_name_to_node: HashMap<_, _> = self
             .cycle_nodes
             .iter()
             .flat_map(|node| {
@@ -98,12 +99,13 @@ impl Cycler {
                     .main_outputs
                     .iter()
                     .filter_map(move |field| match field {
-                        Field::MainOutput { name, .. } => Some((name.to_string(), node)),
+                        Field::MainOutput { name, .. } => Some((name.clone(), node)),
                         _ => None,
                     })
             })
             .collect();
-        let sorted_cycle_nodes = sort_nodes(&self.cycle_nodes, &output_to_node, &setup_outputs)?;
+        let sorted_cycle_nodes =
+            sort_nodes(&self.cycle_nodes, &output_name_to_node, &setup_outputs)?;
 
         self.setup_nodes = sorted_setup_nodes;
         self.cycle_nodes = sorted_cycle_nodes;
@@ -171,8 +173,8 @@ impl Cyclers {
 
 fn sort_nodes(
     nodes: &[Node],
-    output_to_node: &HashMap<String, &Node>,
-    existing_outputs: &HashSet<String>,
+    output_name_to_node: &HashMap<Ident, &Node>,
+    existing_outputs: &HashSet<Ident>,
 ) -> Result<Vec<Node>, Error> {
     let mut topological_sort = TopologicalSort::<&Node>::new();
     for node in nodes {
@@ -194,17 +196,17 @@ fn sort_nodes(
                     ..
                 } => {
                     let first_segment = path.segments.first()?;
-                    Some(first_segment.name.as_str())
+                    Some(&first_segment.name)
                 }
                 _ => None,
             })
         {
-            let producing_node = match output_to_node.get(dependency) {
+            let producing_node = match output_name_to_node.get(dependency) {
                 Some(node) => node,
                 None if existing_outputs.contains(dependency) => continue,
                 None => {
                     return Err(Error::MissingOutput {
-                        node: node.name.clone(),
+                        node: node.name.to_string(),
                         output: dependency.to_string(),
                     })
                 }

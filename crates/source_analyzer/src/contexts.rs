@@ -1,6 +1,7 @@
 use syn::{Expr, ExprLit, File, GenericArgument, Ident, Item, Lit, PathArguments, Type};
 
 use crate::{
+    cycler::InstanceName,
     error::ParseError,
     path::Path,
     to_absolute::ToAbsolute,
@@ -77,7 +78,7 @@ pub enum Field {
         path: Path,
     },
     Input {
-        cycler_instance: Option<String>,
+        cycler_instance: Option<InstanceName>,
         data_type: Type,
         name: Ident,
         path: Path,
@@ -92,7 +93,7 @@ pub enum Field {
         path: Path,
     },
     PerceptionInput {
-        cycler_instance: String,
+        cycler_instance: InstanceName,
         data_type: Type,
         name: Ident,
         path: Path,
@@ -103,7 +104,7 @@ pub enum Field {
         path: Path,
     },
     RequiredInput {
-        cycler_instance: Option<String>,
+        cycler_instance: Option<InstanceName>,
         data_type: Type,
         name: Ident,
         path: Path,
@@ -293,7 +294,9 @@ fn extract_two_arguments(arguments: &PathArguments) -> Result<(Type, Path), Pars
     }
 }
 
-fn extract_three_arguments(arguments: &PathArguments) -> Result<(Type, String, Path), ParseError> {
+fn extract_three_arguments(
+    arguments: &PathArguments,
+) -> Result<(Type, InstanceName, Path), ParseError> {
     match arguments {
         PathArguments::AngleBracketed(arguments) => {
             if arguments.args.len() != 3 {
@@ -313,7 +316,7 @@ fn extract_three_arguments(arguments: &PathArguments) -> Result<(Type, String, P
                     },
                 ))) => Ok((
                     type_argument.clone(),
-                    first_literal_argument.token().to_string().trim_matches('"').to_string(),
+                    first_literal_argument.parse()?,
                     Path::from(second_literal_argument.token().to_string().trim_matches('"')),
                 )),
                 _ => Err(

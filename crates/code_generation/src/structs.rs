@@ -1,4 +1,3 @@
-use convert_case::{Case, Casing};
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use source_analyzer::{struct_hierarchy::StructHierarchy, structs::Structs};
@@ -23,7 +22,6 @@ pub fn generate_structs(structs: &Structs) -> TokenStream {
         .cyclers
         .iter()
         .map(|(cycler_module, cycler_structs)| {
-            let cycler_module_identifier = format_ident!("{}", cycler_module.to_case(Case::Snake));
             let main_outputs = hierarchy_to_token_stream(
                 &cycler_structs.main_outputs,
                 format_ident!("MainOutputs"),
@@ -41,7 +39,8 @@ pub fn generate_structs(structs: &Structs) -> TokenStream {
             );
 
             quote! {
-                pub mod #cycler_module_identifier {
+                #[allow(non_snake_case, non_camel_case_types)]
+                pub mod #cycler_module {
                     #main_outputs
                     #additional_outputs
                     #persistent_state
@@ -50,6 +49,7 @@ pub fn generate_structs(structs: &Structs) -> TokenStream {
         });
 
     quote! {
+        #[allow(non_snake_case, non_camel_case_types)]
         #configuration
         #(#cyclers)*
     }
@@ -65,34 +65,31 @@ fn hierarchy_to_token_stream(
         StructHierarchy::Optional { .. } => panic!("option instead of struct"),
         StructHierarchy::Field { .. } => panic!("field instead of struct"),
     };
-    let struct_fields = fields.iter().map(|(name, struct_hierarchy)| {
-        let name_identifier = format_ident!("{}", name);
-        match struct_hierarchy {
+    let struct_fields = fields
+        .iter()
+        .map(|(name, struct_hierarchy)| match struct_hierarchy {
             StructHierarchy::Struct { .. } => {
-                let struct_name_identifier =
-                    format_ident!("{}{}", struct_name, name.to_case(Case::Pascal));
-                quote! { pub #name_identifier: #struct_name_identifier }
+                let struct_name_identifier = format_ident!("{}_{}", struct_name, name);
+                quote! { pub #name: #struct_name_identifier }
             }
             StructHierarchy::Optional { child } => match &**child {
                 StructHierarchy::Struct { .. } => {
-                    let struct_name_identifier =
-                        format_ident!("{}{}", struct_name, name.to_case(Case::Pascal));
-                    quote! { pub #name_identifier: Option<#struct_name_identifier> }
+                    let struct_name_identifier = format_ident!("{}_{}", struct_name, name);
+                    quote! { pub #name: Option<#struct_name_identifier> }
                 }
                 StructHierarchy::Optional { .. } => {
                     panic!("unexpected optional in an optional struct")
                 }
                 StructHierarchy::Field { data_type } => {
-                    quote! { pub #name_identifier: Option<#data_type> }
+                    quote! { pub #name: Option<#data_type> }
                 }
             },
             StructHierarchy::Field { data_type } => {
-                quote! { pub #name_identifier: #data_type }
+                quote! { pub #name: #data_type }
             }
-        }
-    });
+        });
     let child_structs = fields.iter().map(|(name, struct_hierarchy)| {
-        let struct_name = format_ident!("{}{}", struct_name, name.to_case(Case::Pascal));
+        let struct_name = format_ident!("{}_{}", struct_name, name);
         match struct_hierarchy {
             StructHierarchy::Struct { .. } => {
                 hierarchy_to_token_stream(struct_hierarchy, struct_name, derives)

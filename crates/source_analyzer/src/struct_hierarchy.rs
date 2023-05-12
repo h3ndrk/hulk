@@ -1,12 +1,12 @@
 use std::collections::BTreeMap;
 
-use syn::Type;
+use syn::{Ident, Type};
 use thiserror::Error;
 
 #[derive(Debug, PartialEq)]
 pub enum StructHierarchy {
     Struct {
-        fields: BTreeMap<String, StructHierarchy>,
+        fields: BTreeMap<Ident, StructHierarchy>,
     },
     Optional {
         child: Box<StructHierarchy>,
@@ -26,7 +26,7 @@ impl StructHierarchy {
 
 #[derive(Clone, Debug)]
 pub enum InsertionRule {
-    InsertField { name: String },
+    InsertField { name: Ident },
     BeginOptional,
     BeginStruct,
     AppendDataType { data_type: Type },
@@ -84,7 +84,9 @@ impl StructHierarchy {
             },
             StructHierarchy::Optional { child } => match rule {
                 InsertionRule::InsertField { name } => {
-                    return Err(HierarchyError::FieldInOptional { name });
+                    return Err(HierarchyError::FieldInOptional {
+                        name: name.to_string(),
+                    });
                 }
                 InsertionRule::BeginOptional => {
                     child.insert(insertion_rules)?;

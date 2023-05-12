@@ -1,6 +1,5 @@
 use std::iter::repeat;
 
-use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use source_analyzer::cycler::{CyclerKind, Cyclers};
@@ -15,7 +14,7 @@ pub fn generate_run_function(cyclers: &Cyclers) -> TokenStream {
     let join_cyclers = generate_cycler_joins(cyclers);
 
     quote! {
-        #[allow(dead_code, unused_mut, unused_imports, unused_variables, clippy::too_many_arguments, clippy::redundant_clone, clippy::needless_question_mark)]
+        #[allow(non_snake_case, dead_code, unused_mut, unused_imports, unused_variables, clippy::too_many_arguments, clippy::redundant_clone, clippy::needless_question_mark)]
         pub fn run(
             hardware_interface: std::sync::Arc<impl crate::HardwareInterface + Send + Sync + 'static>,
             addresses: Option<impl tokio::net::ToSocketAddrs + std::marker::Send + std::marker::Sync + 'static>,
@@ -70,8 +69,8 @@ fn generate_multiple_buffers(cyclers: &Cyclers) -> TokenStream {
         repeat(quote! { Default::default(), }).take(2 + 1).collect();
 
     cyclers.instances().map(|(cycler, instance)| {
-        let writer_identifier = format_ident!("{}_writer", instance.name.to_case(Case::Snake));
-        let reader_identifier = format_ident!("{}_reader", instance.name.to_case(Case::Snake));
+        let writer_identifier = format_ident!("{}_writer", instance.name);
+        let reader_identifier = format_ident!("{}_reader", instance.name);
         let slot_initializers = match cycler.kind {
             CyclerKind::Perception => &slots_for_perception_cyclers,
             CyclerKind::RealTime => &slots_for_real_time_cyclers,
@@ -88,10 +87,8 @@ fn generate_future_queues(cyclers: &Cyclers) -> TokenStream {
     cyclers
         .instances_with(CyclerKind::Perception)
         .map(|(_cycler, instance)| {
-            let producer_identifier =
-                format_ident!("{}_producer", instance.name.to_case(Case::Snake));
-            let consumer_identifier =
-                format_ident!("{}_consumer", instance.name.to_case(Case::Snake));
+            let producer_identifier = format_ident!("{}_producer", instance.name);
+            let consumer_identifier = format_ident!("{}_consumer", instance.name);
             quote! {
                 let (#producer_identifier, #consumer_identifier) = framework::future_queue();
             }
@@ -101,19 +98,19 @@ fn generate_future_queues(cyclers: &Cyclers) -> TokenStream {
 
 fn generate_cycler_constructors(cyclers: &Cyclers) -> TokenStream {
     cyclers.instances().map(|(cycler, instance)| {
-        let instance_name_snake_case = instance.name.to_case(Case::Snake);
-        let cycler_database_changed_identifier = format_ident!("{instance_name_snake_case}_changed");
-        let cycler_variable_identifier = format_ident!("{instance_name_snake_case}_cycler");
-        let cycler_module_name = format_ident!("{}", cycler.name.to_case(Case::Snake));
+        let instance_name = &instance.name;
+        let cycler_database_changed_identifier = format_ident!("{instance_name}_changed");
+        let cycler_variable_identifier = format_ident!("{instance_name}_cycler");
+        let cycler_module_name = &cycler.name;
         let cycler_instance_name = &instance.name;
-        let cycler_instance_name_identifier = format_ident!("{cycler_instance_name}");
-        let own_writer_identifier = format_ident!("{instance_name_snake_case}_writer");
-        let own_reader_identifier = format_ident!("{instance_name_snake_case}_reader");
-        let own_subscribed_outputs_writer_identifier = format_ident!("{instance_name_snake_case}_subscribed_outputs_writer");
-        let own_subscribed_outputs_reader_identifier = format_ident!("{instance_name_snake_case}_subscribed_outputs_reader");
+        let cycler_instance_name_string = instance.name.to_string();
+        let own_writer_identifier = format_ident!("{instance_name}_writer");
+        let own_reader_identifier = format_ident!("{instance_name}_reader");
+        let own_subscribed_outputs_writer_identifier = format_ident!("{instance_name}_subscribed_outputs_writer");
+        let own_subscribed_outputs_reader_identifier = format_ident!("{instance_name}_subscribed_outputs_reader");
         let own_producer_identifier = match cycler.kind {
             CyclerKind::Perception  => {
-                let own_producer_identifier = format_ident!("{instance_name_snake_case}_producer");
+                let own_producer_identifier = format_ident!("{instance_name}_producer");
                 quote! { #own_producer_identifier, }
             },
             CyclerKind::RealTime  => quote!{},
@@ -124,11 +121,11 @@ fn generate_cycler_constructors(cyclers: &Cyclers) -> TokenStream {
         })
          .map(|(cycler, instance)| match cycler.kind {
                 CyclerKind::Perception => {
-                    let identifier = format_ident!("{}_consumer", instance.name.to_case(Case::Snake));
+                    let identifier = format_ident!("{}_consumer", instance.name);
                     quote! { #identifier }
                 },
                 CyclerKind::RealTime => {
-                    let identifier = format_ident!("{}_reader", instance.name.to_case(Case::Snake));
+                    let identifier = format_ident!("{}_reader", instance.name);
                     quote! { #identifier.clone() }
                 },
             });
@@ -141,7 +138,7 @@ fn generate_cycler_constructors(cyclers: &Cyclers) -> TokenStream {
                 Default::default(),
             ]);
             let #cycler_variable_identifier = crate::cyclers::#cycler_module_name::Cycler::new(
-                crate::cyclers::#cycler_module_name::CyclerInstance::#cycler_instance_name_identifier,
+                crate::cyclers::#cycler_module_name::CyclerInstance::#cycler_instance_name,
                 hardware_interface.clone(),
                 #own_writer_identifier,
                 #cycler_database_changed_identifier.clone(),
@@ -152,7 +149,7 @@ fn generate_cycler_constructors(cyclers: &Cyclers) -> TokenStream {
             )
             .wrap_err(#error_message)?;
             communication_server.register_cycler_instance(
-                #cycler_instance_name,
+                #cycler_instance_name_string,
                 #cycler_database_changed_identifier,
                 #own_reader_identifier.clone(),
                 #own_subscribed_outputs_writer_identifier,
@@ -166,10 +163,8 @@ fn generate_cycler_starts(cyclers: &Cyclers) -> TokenStream {
     cyclers
         .instances()
         .map(|(_cycler, instance)| {
-            let cycler_variable_identifier =
-                format_ident!("{}_cycler", instance.name.to_case(Case::Snake));
-            let cycler_handle_identifier =
-                format_ident!("{}_handle", instance.name.to_case(Case::Snake));
+            let cycler_variable_identifier = format_ident!("{}_cycler", instance.name);
+            let cycler_handle_identifier = format_ident!("{}_handle", instance.name);
             let error_message = format!("failed to start cycler `{}`", instance.name);
             quote! {
                 let #cycler_handle_identifier = #cycler_variable_identifier
@@ -184,8 +179,7 @@ fn generate_cycler_joins(cyclers: &Cyclers) -> TokenStream {
     cyclers
         .instances()
         .map(|(_cycler, instance)| {
-            let cycler_handle_identifier =
-                format_ident!("{}_handle", instance.name.to_case(Case::Snake));
+            let cycler_handle_identifier = format_ident!("{}_handle", instance.name);
             quote! {
                 match #cycler_handle_identifier.join() {
                     Ok(Err(error)) => {

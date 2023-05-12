@@ -1,4 +1,3 @@
-use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use source_analyzer::{
@@ -57,8 +56,8 @@ fn path_to_accessor_token_stream_with_cycler_instance(
 ) -> TokenStream {
     let segments = path.segments.iter().map(|segment| {
         let field = match segment.is_variable {
-            true => format_ident!("{}", cycler_instance.unwrap().to_case(Case::Snake)),
-            false => format_ident!("{}", segment.name),
+            true => cycler_instance.unwrap(),
+            false => &segment.name,
         };
         match segment.is_optional {
             true => match reference_type {
@@ -285,14 +284,14 @@ mod tests {
             ),
         ];
         let cycler = Cycler {
-            name: "TestCycler".to_string(),
+            name: format_ident!("TestCycler"),
             kind: CyclerKind::RealTime,
             instances: vec![
                 Instance {
-                    name: "InstanceA".to_string(),
+                    name: format_ident!("InstanceA"),
                 },
                 Instance {
-                    name: "InstanceB".to_string(),
+                    name: format_ident!("InstanceB"),
                 },
             ],
             setup_nodes: vec![],

@@ -1,6 +1,5 @@
 use std::iter::once;
 
-use convert_case::{Case, Casing};
 use itertools::Itertools;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
@@ -25,14 +24,14 @@ pub fn generate_cyclers(cyclers: &Cyclers) -> TokenStream {
 }
 
 fn generate_module(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
-    let module_name = format_ident!("{}", cycler.name.to_case(Case::Snake));
+    let module_name = &cycler.name;
     let cycler_instance = generate_cycler_instance(cycler);
     let database_struct = generate_database_struct();
     let cycler_struct = generate_struct(cycler, cyclers);
     let cycler_implementation = generate_implementation(cycler, cyclers);
 
     quote! {
-        #[allow(dead_code, unused_mut, unused_variables, clippy::too_many_arguments, clippy::redundant_clone, clippy::needless_question_mark)]
+        #[allow(non_snake_case, dead_code, unused_mut, unused_variables, clippy::too_many_arguments, clippy::redundant_clone, clippy::needless_question_mark)]
         pub(crate) mod #module_name {
             use color_eyre::eyre::WrapErr;
             use crate::structs::#module_name::{MainOutputs, AdditionalOutputs};
@@ -69,7 +68,7 @@ fn generate_database_struct() -> TokenStream {
 }
 
 fn generate_struct(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
-    let module_name = format_ident!("{}", cycler.name.to_case(Case::Snake));
+    let module_name = &cycler.name;
     let input_output_fields = generate_input_output_fields(cycler, cyclers);
     let realtime_inputs = match cycler.kind {
         CyclerKind::Perception => quote! {},
@@ -120,8 +119,8 @@ fn generate_reader_fields(cyclers: &Cyclers) -> TokenStream {
     cyclers
         .instances_with(CyclerKind::RealTime)
         .map(|(cycler, instance)| {
-            let field_name = format_ident!("{}_reader", instance.name.to_case(Case::Snake));
-            let cycler_module_name = format_ident!("{}", cycler.name.to_case(Case::Snake));
+            let field_name = format_ident!("{}_reader", instance.name);
+            let cycler_module_name = &cycler.name;
 
             quote! {
                 #field_name: framework::Reader<crate::cyclers::#cycler_module_name::Database>,
@@ -134,8 +133,8 @@ fn generate_consumer_fields(cyclers: &Cyclers) -> TokenStream {
     cyclers
         .instances_with(CyclerKind::Perception)
         .map(|(cycler, instance)| {
-            let field_name = format_ident!("{}_consumer", instance.name.to_case(Case::Snake));
-            let cycler_module_name = format_ident!("{}", cycler.name.to_case(Case::Snake));
+            let field_name = format_ident!("{}_consumer", instance.name);
+            let cycler_module_name = &cycler.name;
 
             quote! {
                 #field_name: framework::Consumer<crate::structs::#cycler_module_name::MainOutputs>,
@@ -148,11 +147,10 @@ fn generate_node_fields(cycler: &Cycler) -> TokenStream {
     let fields: Vec<_> = cycler
         .iter_nodes()
         .map(|node| {
-            let node_name_snake_case = format_ident!("{}", node.name.to_case(Case::Snake));
+            let node_name = &node.name;
             let node_module = &node.module;
-            let node_name = format_ident!("{}", node.name);
             quote! {
-                #node_name_snake_case: #node_module::#node_name
+                #node_name: #node_module::#node_name
             }
         })
         .collect();
@@ -180,11 +178,9 @@ fn generate_implementation(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
 
 fn generate_new_method(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
     let input_output_fields = generate_input_output_fields(cycler, cyclers);
-    let cycler_module_name = format_ident!("{}", cycler.name.to_case(Case::Snake));
+    let cycler_module_name = format_ident!("{}", cycler.name);
     let node_initializers = generate_node_initializers(cycler);
-    let node_identifiers = cycler
-        .iter_nodes()
-        .map(|node| format_ident!("{}", node.name.to_case(Case::Snake)));
+    let node_identifiers = cycler.iter_nodes().map(|node| &node.name);
     let input_output_identifiers = generate_input_output_identifiers(cycler, cyclers);
 
     quote! {
@@ -217,13 +213,12 @@ fn generate_new_method(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
 
 fn generate_node_initializers(cycler: &Cycler) -> TokenStream {
     let initializers = cycler.iter_nodes().map(|node| {
-        let node_name_snake_case = format_ident!("{}", node.name.to_case(Case::Snake));
+        let node_name = &node.name;
         let node_module = &node.module;
-        let node_name = format_ident!("{}", node.name);
         let field_initializers = generate_node_field_initializers(node, cycler);
         let error_message = format!("failed to create node `{}`", node.name);
         quote! {
-            let #node_name_snake_case = #node_module::#node_name::new(
+            let #node_name = #node_module::#node_name::new(
                 #node_module::CreationContext {
                     #field_initializers
                 }
@@ -311,14 +306,14 @@ fn generate_input_output_identifiers(cycler: &Cycler, cyclers: &Cyclers) -> Toke
 fn generate_reader_identifiers(cyclers: &Cyclers) -> Vec<Ident> {
     cyclers
         .instances_with(CyclerKind::RealTime)
-        .map(|(_cycler, instance)| format_ident!("{}_reader", instance.name.to_case(Case::Snake)))
+        .map(|(_cycler, instance)| format_ident!("{}_reader", instance.name))
         .collect()
 }
 
 fn generate_consumer_identifiers(cyclers: &Cyclers) -> Vec<Ident> {
     cyclers
         .instances_with(CyclerKind::Perception)
-        .map(|(_cycler, instance)| format_ident!("{}_consumer", instance.name.to_case(Case::Snake)))
+        .map(|(_cycler, instance)| format_ident!("{}_consumer", instance.name))
         .collect()
 }
 
@@ -378,8 +373,8 @@ fn generate_cycle_method(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
         CyclerKind::Perception => cyclers
             .instances_with(CyclerKind::RealTime)
             .map(|(_cycler, instance)| {
-                let reader = format_ident!("{}_reader", instance.name.to_case(Case::Snake));
-                let database = format_ident!("{}_database", instance.name.to_case(Case::Snake));
+                let reader = format_ident!("{}_reader", instance.name);
+                let database = format_ident!("{}_database", instance.name);
                 quote! {
                     let #database = self.#reader.next();
                 }
@@ -442,7 +437,7 @@ fn generate_perception_cycler_updates(cyclers: &Cyclers) -> TokenStream {
     cyclers
         .instances_with(CyclerKind::Perception)
         .map(|(_cycler, instance)| {
-            let identifier = format_ident!("{}", instance.name.to_case(Case::Snake));
+            let identifier = &instance.name;
             let consumer = format_ident!("{}_consumer", identifier);
             quote! {
                 #identifier: self.#consumer.consume(now),
@@ -454,8 +449,8 @@ fn generate_perception_cycler_updates(cyclers: &Cyclers) -> TokenStream {
 fn generate_node_execution(node: &Node, cycler: &Cycler) -> TokenStream {
     let are_required_inputs_some = generate_required_input_condition(node, cycler);
     let node_name = &node.name;
+    let node_name_string = node.name.to_string();
     let node_module = &node.module;
-    let node_member = format_ident!("{}", node.name.to_case(Case::Snake));
     let context_initializers = generate_context_initializers(node, cycler);
     let error_message = format!("failed to execute cycle of `{}`", node.name);
     let database_updates = generate_database_updates(node);
@@ -464,8 +459,8 @@ fn generate_node_execution(node: &Node, cycler: &Cycler) -> TokenStream {
         {
             if #are_required_inputs_some {
                 let main_outputs = {
-                    let _task = ittapi::Task::begin(&itt_domain, #node_name);
-                    self.#node_member.cycle(
+                    let _task = ittapi::Task::begin(&itt_domain, #node_name_string);
+                    self.#node_name.cycle(
                         #node_module::CycleContext {
                             #context_initializers
                         },
@@ -494,8 +489,7 @@ fn generate_required_input_condition(node: &Node, cycler: &Cycler) -> TokenStrea
             } => {
                 let database_prefix = match cycler_instance {
                     Some(cycler_instance) => {
-                        let identifier =
-                            format_ident!("{}_database", cycler_instance.to_case(Case::Snake));
+                        let identifier = format_ident!("{}_database", cycler_instance);
                         quote! { #identifier.main_outputs }
                     }
                     None => {
@@ -533,8 +527,8 @@ fn generate_context_initializers(node: &Node, cycler: &Cycler) -> TokenStream {
                         ReferenceKind::Mutable,
                         cycler,
                     );
-                    let path_string = once("additional_outputs").chain(
-                            path.segments.iter().map(|segment| segment.name.as_str())
+                    let path_string = once("additional_outputs".to_string()).chain(
+                            path.segments.iter().map(|segment| segment.name.to_string())
                         ).join(".");
                     quote! {
                         #name: framework::AdditionalOutput::new(
@@ -587,7 +581,7 @@ fn generate_context_initializers(node: &Node, cycler: &Cycler) -> TokenStream {
                     let database_prefix = match cycler_instance {
                         Some(cycler_instance) => {
                             let identifier =
-                                format_ident!("{}_database", cycler_instance.to_case(Case::Snake));
+                                format_ident!("{}_database", cycler_instance);
                             quote! { #identifier.main_outputs }
                         }
                         None => {
@@ -624,8 +618,6 @@ fn generate_context_initializers(node: &Node, cycler: &Cycler) -> TokenStream {
                     path,
                     ..
                 } => {
-                    let cycler_instance_identifier =
-                        format_ident!("{}", cycler_instance.to_case(Case::Snake));
                     let accessor = path_to_accessor_token_stream(
                         quote! { database },
                         path,
@@ -640,7 +632,7 @@ fn generate_context_initializers(node: &Node, cycler: &Cycler) -> TokenStream {
                                 .map(|(system_time, databases)| (
                                     *system_time,
                                     databases
-                                        .#cycler_instance_identifier
+                                        .#cycler_instance
                                         .iter()
                                         .map(|database| #accessor)
                                         .collect()
@@ -653,7 +645,7 @@ fn generate_context_initializers(node: &Node, cycler: &Cycler) -> TokenStream {
                                 .map(|(system_time, databases)| (
                                     *system_time,
                                     databases
-                                        .#cycler_instance_identifier
+                                        .#cycler_instance
                                         .iter()
                                         .map(|database| #accessor)
                                         .collect()
@@ -683,7 +675,7 @@ fn generate_context_initializers(node: &Node, cycler: &Cycler) -> TokenStream {
                     let database_prefix = match cycler_instance {
                         Some(cycler_instance) => {
                             let identifier =
-                                format_ident!("{}_database", cycler_instance.to_case(Case::Snake));
+                                format_ident!("{}_database", cycler_instance);
                             quote! { #identifier.main_outputs }
                         }
                         None => {

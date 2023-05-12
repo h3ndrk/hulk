@@ -120,7 +120,7 @@ fn add_main_outputs(field: &Field, cycler_structs: &mut CyclerStructs) {
         Field::MainOutput { data_type, name } => match &mut cycler_structs.main_outputs {
             StructHierarchy::Struct { fields } => {
                 fields.insert(
-                    name.to_string(),
+                    name.clone(),
                     StructHierarchy::Field {
                         data_type: data_type.clone(),
                     },
@@ -217,15 +217,15 @@ mod tests {
                 vec![
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "a".to_string(),
+                        name: format_ident!("a"),
                     },
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "b".to_string(),
+                        name: format_ident!("b"),
                     },
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "c".to_string(),
+                        name: format_ident!("c"),
                     },
                     InsertionRule::AppendDataType {
                         data_type: data_type.clone(),
@@ -237,16 +237,16 @@ mod tests {
                 vec![
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "a".to_string(),
+                        name: format_ident!("a"),
                     },
                     InsertionRule::BeginOptional,
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "b".to_string(),
+                        name: format_ident!("b"),
                     },
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "c".to_string(),
+                        name: format_ident!("c"),
                     },
                     InsertionRule::AppendDataType {
                         data_type: data_type.clone(),
@@ -258,17 +258,17 @@ mod tests {
                 vec![
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "a".to_string(),
+                        name: format_ident!("a"),
                     },
                     InsertionRule::BeginOptional,
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "b".to_string(),
+                        name: format_ident!("b"),
                     },
                     InsertionRule::BeginOptional,
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "c".to_string(),
+                        name: format_ident!("c"),
                     },
                     InsertionRule::AppendDataType {
                         data_type: data_type.clone(),
@@ -280,17 +280,17 @@ mod tests {
                 vec![
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "a".to_string(),
+                        name: format_ident!("a"),
                     },
                     InsertionRule::BeginOptional,
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "b".to_string(),
+                        name: format_ident!("b"),
                     },
                     InsertionRule::BeginOptional,
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "c".to_string(),
+                        name: format_ident!("c"),
                     },
                     InsertionRule::BeginOptional,
                     InsertionRule::AppendDataType {
@@ -303,16 +303,16 @@ mod tests {
                 vec![
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "a".to_string(),
+                        name: format_ident!("a"),
                     },
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "b".to_string(),
+                        name: format_ident!("b"),
                     },
                     InsertionRule::BeginOptional,
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "c".to_string(),
+                        name: format_ident!("c"),
                     },
                     InsertionRule::BeginOptional,
                     InsertionRule::AppendDataType {
@@ -325,15 +325,15 @@ mod tests {
                 vec![
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "a".to_string(),
+                        name: format_ident!("a"),
                     },
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "b".to_string(),
+                        name: format_ident!("b"),
                     },
                     InsertionRule::BeginStruct,
                     InsertionRule::InsertField {
-                        name: "c".to_string(),
+                        name: format_ident!("c"),
                     },
                     InsertionRule::BeginOptional,
                     InsertionRule::AppendDataType {
@@ -371,15 +371,15 @@ mod tests {
         let insertion_rules = vec![
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "a".to_string(),
+                name: format_ident!("a"),
             },
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "b".to_string(),
+                name: format_ident!("b"),
             },
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "c".to_string(),
+                name: format_ident!("c"),
             },
             InsertionRule::AppendDataType {
                 data_type: data_type.clone(),
@@ -392,21 +392,21 @@ mod tests {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(a) = fields.get(&"a".to_string()) else {
+        let Some(a) = fields.get(&format_ident!("a")) else {
             panic!("expected field `a`");
         };
         let StructHierarchy::Struct { fields } = a else {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(b) = fields.get(&"b".to_string()) else {
+        let Some(b) = fields.get(&format_ident!("b")) else {
             panic!("expected field `b`");
         };
         let StructHierarchy::Struct { fields } = b else {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(c) = fields.get(&"c".to_string()) else {
+        let Some(c) = fields.get(&format_ident!("c")) else {
             panic!("expected field `c`");
         };
         let StructHierarchy::Field { data_type: matched_data_type } = c else {
@@ -422,16 +422,16 @@ mod tests {
         let insertion_rules = vec![
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "a".to_string(),
+                name: format_ident!("a"),
             },
             InsertionRule::BeginOptional,
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "b".to_string(),
+                name: format_ident!("b"),
             },
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "c".to_string(),
+                name: format_ident!("c"),
             },
             InsertionRule::AppendDataType {
                 data_type: data_type.clone(),
@@ -444,7 +444,7 @@ mod tests {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(a) = fields.get(&"a".to_string()) else {
+        let Some(a) = fields.get(&format_ident!("a")) else {
             panic!("expected field `a`");
         };
         let StructHierarchy::Optional { child } = a else {
@@ -454,14 +454,14 @@ mod tests {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(b) = fields.get(&"b".to_string()) else {
+        let Some(b) = fields.get(&format_ident!("b")) else {
             panic!("expected field `b`");
         };
         let StructHierarchy::Struct { fields } = b else {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(c) = fields.get(&"c".to_string()) else {
+        let Some(c) = fields.get(&format_ident!("c")) else {
             panic!("expected field `c`");
         };
         let StructHierarchy::Field { data_type: matched_data_type } = c else {
@@ -477,17 +477,17 @@ mod tests {
         let insertion_rules = vec![
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "a".to_string(),
+                name: format_ident!("a"),
             },
             InsertionRule::BeginOptional,
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "b".to_string(),
+                name: format_ident!("b"),
             },
             InsertionRule::BeginOptional,
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "c".to_string(),
+                name: format_ident!("c"),
             },
             InsertionRule::AppendDataType {
                 data_type: data_type.clone(),
@@ -500,7 +500,7 @@ mod tests {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(a) = fields.get(&"a".to_string()) else {
+        let Some(a) = fields.get(&format_ident!("a")) else {
             panic!("expected field `a`");
         };
         let StructHierarchy::Optional { child } = a else {
@@ -510,7 +510,7 @@ mod tests {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(b) = fields.get(&"b".to_string()) else {
+        let Some(b) = fields.get(&format_ident!("b")) else {
             panic!("expected field `b`");
         };
         let StructHierarchy::Optional { child } = b else {
@@ -520,7 +520,7 @@ mod tests {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(c) = fields.get(&"c".to_string()) else {
+        let Some(c) = fields.get(&format_ident!("c")) else {
             panic!("expected field `c`");
         };
         let StructHierarchy::Field { data_type: matched_data_type } = c else {
@@ -536,17 +536,17 @@ mod tests {
         let insertion_rules = vec![
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "a".to_string(),
+                name: format_ident!("a"),
             },
             InsertionRule::BeginOptional,
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "b".to_string(),
+                name: format_ident!("b"),
             },
             InsertionRule::BeginOptional,
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "c".to_string(),
+                name: format_ident!("c"),
             },
             InsertionRule::BeginOptional,
             InsertionRule::AppendDataType {
@@ -560,7 +560,7 @@ mod tests {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(a) = fields.get(&"a".to_string()) else {
+        let Some(a) = fields.get(&format_ident!("a")) else {
             panic!("expected field `a`");
         };
         let StructHierarchy::Optional { child } = a else {
@@ -570,7 +570,7 @@ mod tests {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(b) = fields.get(&"b".to_string()) else {
+        let Some(b) = fields.get(&format_ident!("b")) else {
             panic!("expected field `b`");
         };
         let StructHierarchy::Optional { child } = b else {
@@ -580,7 +580,7 @@ mod tests {
             panic!("expected StructHierarchy::Struct");
         };
         assert_eq!(fields.len(), 1);
-        let Some(c) = fields.get(&"c".to_string()) else {
+        let Some(c) = fields.get(&format_ident!("c")) else {
             panic!("expected field `c`");
         };
         let StructHierarchy::Optional { child } = c else {
@@ -598,11 +598,11 @@ mod tests {
         let more_specific_insertion_rules = vec![
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "a".to_string(),
+                name: format_ident!("a"),
             },
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "b".to_string(),
+                name: format_ident!("b"),
             },
             InsertionRule::AppendDataType {
                 data_type: data_type.clone(),
@@ -611,7 +611,7 @@ mod tests {
         let less_specific_insertion_rules = vec![
             InsertionRule::BeginStruct,
             InsertionRule::InsertField {
-                name: "a".to_string(),
+                name: format_ident!("a"),
             },
             InsertionRule::AppendDataType { data_type },
         ];

@@ -8,6 +8,7 @@ use serde::{
     de::{value::MapAccessDeserializer, MapAccess, Visitor},
     Deserialize, Deserializer,
 };
+use syn::{parse::Parse, Ident};
 
 use crate::{cycler::CyclerKind, error::Error};
 
@@ -32,7 +33,8 @@ impl FrameworkManifest {
 
 #[derive(Debug, Deserialize)]
 pub struct CyclerManifest {
-    pub name: String,
+    #[serde(deserialize_with = "deserialize_syn_parse")]
+    pub name: Ident,
     pub kind: CyclerKind,
     pub instances: Option<Vec<String>>,
     pub setup_nodes: Vec<NodeSpecification>,
@@ -119,14 +121,15 @@ impl<'de> Deserialize<'de> for TomlNodeSpecification {
 
 #[derive(Deserialize)]
 struct DetailedNodeSpecification {
-    #[serde(deserialize_with = "deserialize_syn_path")]
+    #[serde(deserialize_with = "deserialize_syn_parse")]
     module: syn::Path,
     path: PathBuf,
 }
 
-fn deserialize_syn_path<'de, D>(deserializer: D) -> Result<syn::Path, D::Error>
+fn deserialize_syn_parse<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
     D: Deserializer<'de>,
+    T: Parse,
 {
     let path = <&str>::deserialize(deserializer)?;
     syn::parse_str(path).map_err(serde::de::Error::custom)

@@ -1,7 +1,7 @@
 use std::{fs::read_to_string, hash::Hash, path::Path};
 
 use quote::ToTokens;
-use syn::{parse_file, ImplItem, Item, ItemImpl, Type};
+use syn::{parse_file, Ident, ImplItem, Item, ItemImpl, Type};
 
 use crate::{
     contexts::Contexts,
@@ -9,7 +9,7 @@ use crate::{
     manifest::NodeSpecification,
 };
 
-pub type NodeName = String;
+pub type NodeName = Ident;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Node {
@@ -54,7 +54,7 @@ impl Node {
                 _ => None,
             })
             .ok_or_else(|| wrap_error(ParseError::new_spanned(&rust_file, "cannot find node declaration, expected a type with new(...) and cycle(...) method")))?
-            .to_string();
+            .clone();
         let contexts = Contexts::try_from_file(&rust_file).map_err(wrap_error)?;
         Ok(Self {
             name,
