@@ -1,7 +1,7 @@
 use syn::{Expr, ExprLit, File, GenericArgument, Ident, Item, Lit, PathArguments, Type};
 
 use crate::{
-    cycler::InstanceName,
+    cyclers::InstanceName,
     error::ParseError,
     path::Path,
     to_absolute::ToAbsolute,

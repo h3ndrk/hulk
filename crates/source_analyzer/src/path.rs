@@ -1,7 +1,7 @@
 use quote::format_ident;
 use syn::Ident;
 
-use crate::cycler::Cycler;
+use crate::cyclers::Cycler;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Path {
