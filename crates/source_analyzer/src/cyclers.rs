@@ -78,7 +78,7 @@ impl Cyclers {
     }
 }
 
-#[derive(Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
 pub enum CyclerKind {
     Perception,
     RealTime,

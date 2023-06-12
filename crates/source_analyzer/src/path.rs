@@ -3,7 +3,7 @@ use syn::Ident;
 
 use crate::cyclers::Cycler;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Path {
     pub segments: Vec<PathSegment>,
 }
@@ -53,7 +53,7 @@ impl Path {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct PathSegment {
     pub name: Ident,
     pub is_optional: bool,
