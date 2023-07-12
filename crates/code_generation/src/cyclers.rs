@@ -13,6 +13,7 @@ use source_analyzer::{
 use crate::accessor::{path_to_accessor_token_stream, ReferenceKind};
 
 pub fn generate_cyclers(cyclers: &Cyclers) -> TokenStream {
+    let recording_databases = generate_recording_databases(cyclers);
     let cyclers: Vec<_> = cyclers
         .cyclers
         .iter()
@@ -20,6 +21,7 @@ pub fn generate_cyclers(cyclers: &Cyclers) -> TokenStream {
         .collect();
 
     quote! {
+        #recording_databases
         #(#cyclers)*
     }
 }
@@ -35,7 +37,7 @@ fn generate_module(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
         #[allow(dead_code, unused_mut, unused_variables, clippy::too_many_arguments, clippy::needless_question_mark)]
         pub(crate) mod #module_name {
             use color_eyre::eyre::WrapErr;
-            use crate::structs::#module_name::{MainOutputs, AdditionalOutputs};
+            pub(super) use crate::structs::#module_name::{MainOutputs, AdditionalOutputs};
 
             #cycler_instance
             #database_struct
@@ -91,6 +93,7 @@ fn generate_struct(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
             own_subscribed_outputs_reader: framework::Reader<std::collections::HashSet<String>>,
             parameters_reader: framework::Reader<crate::structs::Parameters>,
             persistent_state: crate::structs::#module_name::PersistentState,
+            recording_sender: std::sync::mpsc::SyncSender<crate::cyclers::RecordingDatabases>,
             #realtime_inputs
             #input_output_fields
             #node_fields
@@ -195,6 +198,7 @@ fn generate_new_method(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
             own_changed: std::sync::Arc<tokio::sync::Notify>,
             own_subscribed_outputs_reader: framework::Reader<std::collections::HashSet<String>>,
             parameters_reader: framework::Reader<crate::structs::Parameters>,
+            recording_sender: std::sync::mpsc::SyncSender<crate::cyclers::RecordingDatabases>,
             #input_output_fields
         ) -> color_eyre::Result<Self> {
             let parameters = parameters_reader.next().clone();
@@ -208,6 +212,7 @@ fn generate_new_method(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
                 own_subscribed_outputs_reader,
                 parameters_reader,
                 persistent_state,
+                recording_sender,
                 #input_output_identifiers
                 #(#node_identifiers,)*
             })
@@ -401,6 +406,21 @@ fn generate_cycle_method(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
         },
     };
 
+    let recording_cases = cycler.instances.iter().map(|instance| {
+        let module_name = format_ident!("{}", cycler.name.to_case(Case::Snake));
+        let instance_identifier = format_ident!("{}", instance);
+        quote! {
+            crate::cyclers::#module_name::CyclerInstance::#instance_identifier => crate::cyclers::RecordingDatabases::#instance_identifier(
+                own_database_reference.main_outputs.clone(),
+            )
+        }
+    });
+    let recording_value = quote! {
+        match instance {
+            #(#recording_cases,)*
+        }
+    };
+
     quote! {
         #[allow(clippy::nonminimal_bool)]
         pub(crate) fn cycle(&mut self) -> color_eyre::Result<()> {
@@ -431,6 +451,10 @@ fn generate_cycle_method(cycler: &Cycler, cyclers: &Cyclers) -> TokenStream {
                 }
 
                 #after_remaining_nodes
+
+                self.recording_sender
+                    .send(#recording_value)
+                    .expect("receiver should always wait for all senders");
             }
             self.own_changed.notify_one();
             Ok(())
@@ -737,4 +761,19 @@ fn generate_database_updates_from_defaults(node: &Node) -> TokenStream {
             _ => None,
         })
         .collect()
+}
+
+fn generate_recording_databases(cyclers: &Cyclers) -> TokenStream {
+    let variants = cyclers.instances().map(|(cycler, instance)| {
+        let cycler_module_name = format_ident!("{}", cycler.name.to_case(Case::Snake));
+        let identifier = format_ident!("{}", instance);
+        quote! {
+            #identifier(#cycler_module_name::MainOutputs)
+        }
+    });
+    quote! {
+        pub(crate) enum RecordingDatabases {
+            #(#variants,)*
+        }
+    }
 }

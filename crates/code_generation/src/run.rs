@@ -29,10 +29,16 @@ pub fn generate_run_function(cyclers: &Cyclers) -> TokenStream {
 
             #construct_multiple_buffers
             #construct_future_queues
+            let (recording_sender, recording_receiver) = std::sync::mpsc::sync_channel(42);
 
             let communication_server = communication::server::Runtime::start(
-                addresses, parameters_directory, body_id, head_id, #number_of_parameter_slots, keep_running.clone())
-                .wrap_err("failed to start communication server")?;
+                addresses,
+                parameters_directory,
+                body_id,
+                head_id,
+                #number_of_parameter_slots,
+                keep_running.clone(),
+            ).wrap_err("failed to start communication server")?;
 
             #construct_cyclers
 
@@ -145,6 +151,7 @@ fn generate_cycler_constructors(cyclers: &Cyclers) -> TokenStream {
                 #cycler_database_changed_identifier.clone(),
                 #own_subscribed_outputs_reader_identifier,
                 communication_server.get_parameters_reader(),
+                recording_sender.clone(),
                 #own_producer_identifier
                 #(#other_cycler_inputs,)*
             )
