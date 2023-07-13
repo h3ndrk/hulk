@@ -772,6 +772,7 @@ fn generate_recording_databases(cyclers: &Cyclers) -> TokenStream {
         }
     });
     quote! {
+        #[derive(serde::Serialize)]
         pub(crate) enum RecordingDatabases {
             #(#variants,)*
         }

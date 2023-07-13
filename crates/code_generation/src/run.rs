@@ -42,10 +42,43 @@ pub fn generate_run_function(cyclers: &Cyclers) -> TokenStream {
 
             #construct_cyclers
 
+            let recording_keep_running = keep_running.clone();
+            let recording_thread = std::thread::spawn(move || {
+                let seconds = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+                let mut recording = std::io::BufWriter::new(
+                    std::fs::File::create(format!("logs/recording.{seconds}.bincode"))
+                        .expect("failed to open recording file")
+                );
+                while recording_keep_running.is_cancelled() {
+                    match recording_receiver.recv_timeout(std::time::Duration::from_secs(1)) {
+                        Ok(value) => {
+                            let buffer = bincode::serialize(&value)
+                                .expect("failed to serialize recorded context");
+                            use std::io::Write;
+                            recording
+                                .write(&buffer)
+                                .expect("failed to write recorded context");
+                        },
+                        Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {},
+                        Err(error) => panic!("error: {error:?}"),
+                    }
+                }
+            });
+
             #start_cyclers
 
             let mut encountered_error = false;
             #join_cyclers
+            match recording_thread.join() {
+                Ok(_) => {},
+                Err(error) => {
+                    encountered_error = true;
+                    println!("{error:?}");
+                },
+            }
             match communication_server.join() {
                 Ok(Err(error)) => {
                     encountered_error = true;
