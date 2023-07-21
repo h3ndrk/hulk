@@ -14,9 +14,9 @@ One of the main tasks of the framework is to allow cyclers to communicate with e
 For example, in the *setup* step, data from other cyclers and communication is gathered.
 In addition, during the *finalize* step, data produced in the *process* step of this cycle may need to be communicated back to other cyclers.
 
-Cyclers are separated into *realtime* cycler, e.g. the control cycler, and *perception* cyclers, e.g. the vision cycler.
+Cyclers are separated into *realtime* cyclers, e.g. the control cycler, and *perception* cyclers, e.g. the vision cycler.
 
-## Realtime Cycler
+## Realtime Cyclers
 
 A realtime cycler is a central cycler that has realtime characteristics.
 It reacts to external events from the environment, then integrates data from the perception cyclers, and produces some output in the end.
