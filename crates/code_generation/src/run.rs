@@ -44,15 +44,19 @@ pub fn generate_run_function(cyclers: &Cyclers) -> TokenStream {
 
             let recording_keep_running = keep_running.clone();
             let recording_thread = std::thread::spawn(move || {
+                println!("recording thread started");
                 let seconds = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap()
                     .as_secs();
+                println!("recording asd");
                 let mut recording = std::io::BufWriter::new(
                     std::fs::File::create(format!("logs/recording.{seconds}.bincode"))
                         .expect("failed to open recording file")
                 );
-                while recording_keep_running.is_cancelled() {
+                println!("foo");
+                while !recording_keep_running.is_cancelled() {
+                    // println!("record");
                     match recording_receiver.recv_timeout(std::time::Duration::from_secs(1)) {
                         Ok(value) => {
                             let buffer = bincode::serialize(&value)
@@ -66,6 +70,7 @@ pub fn generate_run_function(cyclers: &Cyclers) -> TokenStream {
                         Err(error) => panic!("error: {error:?}"),
                     }
                 }
+                println!("done");
             });
 
             #start_cyclers
