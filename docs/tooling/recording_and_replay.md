@@ -31,3 +31,25 @@ Assuming you already recorded some data on a robot, you can now use the "replaye
 - Move the slider to make data available to Twix. Pro Tip: Click into the text box and use your arrow keys to "animate".
 - ...
 - Profit
+
+### Mouse and Keyboard Controls
+
+- Mouse dragging: Move the current replay time position (green bar)
+- Horizontal scrolling: Panning in time domain
+- Vertical scrolling: Zooming in time domain
+- Horizontal scrolling with pressed Shift key: Panning in time domain
+- Pressing J or down arrow key: jump 10 seconds backward
+- Pressing L or up arrow key: jump 10 seconds forward
+- Pressing left arrow key: jump 1 second backward
+- Pressing right arrow key: jump 1 second forward
+- Pressing comma key: jump 10 milliseconds backward
+- Pressing dot key: jump 10 milliseconds forward
+
+## Image extraction
+
+To extract images from recording data, you can use the "imagine" tool.
+
+Example:
+```
+./pepsi run --target imagine -- my_awesome_replay/10.1.24.42/12345678 path/to/output
+```

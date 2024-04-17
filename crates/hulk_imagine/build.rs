@@ -4,12 +4,11 @@ use hulk_manifest::collect_hulk_cyclers;
 use source_analyzer::{pretty::to_string_pretty, structs::Structs};
 
 fn main() -> Result<()> {
-    #[allow(unused_mut)] // must not be mut if "with_detection" feature is disabled
     let mut cyclers = collect_hulk_cyclers()?;
-    #[cfg(not(feature = "with_object_detection"))]
     cyclers
         .cyclers
-        .retain(|cycler| cycler.name != "ObjectDetection");
+        .retain(|cycler| cycler.name == "Vision" || cycler.name == "Control");
+
     for path in cyclers.watch_paths() {
         println!("cargo:rerun-if-changed={}", path.display());
     }
@@ -22,7 +21,7 @@ fn main() -> Result<()> {
         &cyclers,
         &structs,
         ExecutionMode::Replay {
-            with_communication: true,
+            with_communication: false,
         },
     )
     .write_to_file("generated_code.rs")

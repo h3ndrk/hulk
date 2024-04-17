@@ -1,4 +1,4 @@
-use code_generation::{generate, write_to_file::WriteToFile, Execution};
+use code_generation::{generate, write_to_file::WriteToFile, ExecutionMode};
 use color_eyre::eyre::{Result, WrapErr};
 use source_analyzer::{
     cyclers::{CyclerKind, Cyclers},
