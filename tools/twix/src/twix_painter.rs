@@ -394,6 +394,7 @@ impl<Frame> TwixPainter<Frame> {
         self.painter.text(position, align, text, font_id, color);
     }
 }
+
 impl TwixPainter<Ground> {
     pub fn with_ground_transforms(self) -> Self {
         let length = 2.0;

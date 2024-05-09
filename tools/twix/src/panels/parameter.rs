@@ -56,6 +56,7 @@ impl Panel for ParameterPanel {
             update_notify_receiver,
         }
     }
+
     fn save(&self) -> Value {
         json!({
             "subscribe_key": self.path.clone()

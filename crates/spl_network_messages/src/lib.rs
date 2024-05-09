@@ -1,8 +1,3 @@
-mod bindings;
-mod game_controller_return_message;
-mod game_controller_state_message;
-mod visual_referee_message;
-
 use std::{
     fmt::{self, Display, Formatter},
     time::Duration,
@@ -19,6 +14,11 @@ pub use game_controller_state_message::{
     SubState, Team, TeamColor, TeamState,
 };
 pub use visual_referee_message::{VisualRefereeDecision, VisualRefereeMessage};
+
+mod bindings;
+mod game_controller_return_message;
+mod game_controller_state_message;
+mod visual_referee_message;
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize)]
 pub struct HulkMessage {

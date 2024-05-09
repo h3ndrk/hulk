@@ -66,6 +66,7 @@ impl Keypoints {
         })
     }
 }
+
 impl Index<usize> for Keypoints {
     fn index(&self, index: usize) -> &Keypoint {
         assert!((0..=16).contains(&index));
@@ -92,6 +93,7 @@ impl Index<usize> for Keypoints {
     }
     type Output = Keypoint;
 }
+
 impl From<Keypoints> for [Keypoint; 17] {
     fn from(keypoints: Keypoints) -> Self {
         [
