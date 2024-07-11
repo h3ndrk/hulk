@@ -3107,6 +3107,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "hulk_vision"
+version = "0.1.0"
+dependencies = [
+ "coordinate_systems",
+ "framework",
+ "image",
+ "linear_algebra",
+ "nalgebra",
+ "projection",
+ "serde",
+ "serde_json",
+ "types",
+ "vision",
+]
+
+[[package]]
 name = "hulk_webots"
 version = "0.1.0"
 dependencies = [

@@ -1,0 +1,18 @@
+[package]
+name = "hulk_vision"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+
+[dependencies]
+coordinate_systems = { workspace = true }
+framework = { workspace = true }
+image = { workspace = true }
+linear_algebra = { workspace = true }
+nalgebra = { workspace = true }
+projection = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+types = { workspace = true }
+vision = { workspace = true }
